@@ -141,70 +141,16 @@ criar outro.
 
 ## Arquitetura
 
-```mermaid
-flowchart LR
-    E["Loja ou marketplace<br/>(quem envia o webhook)"]
-
-    subgraph app["container api, 1 processo Node"]
-        API["API<br/>webhook + consulta"]
-        W["Worker BullMQ<br/>concorrência 5"]
-    end
-
-    P[("PostgreSQL<br/>fonte de verdade")]
-    R[("Redis<br/>fila orders-enrichment")]
-    DLQ[("Redis<br/>fila de falhas (DLQ)")]
-    D["DummyJSON<br/>catálogo de produtos"]
-    F["Frankfurter<br/>cotação de moeda"]
-
-    E -->|"POST /webhooks/orders"| API
-    API -->|"1. grava e commita"| P
-    API -->|"2. enfileira<br/>jobId = idempotency_key"| R
-    R --> W
-    W <-->|"lê e atualiza"| P
-    W -->|"uma chamada por item"| D
-    W -->|"se a moeda for diferente da base"| F
-    W -->|"acabaram as tentativas<br/>ou o erro não tem conserto"| DLQ
-```
+[![Arquitetura do orquestrador de pedidos](docs/diagrams/architecture-overview.svg)](docs/diagrams/architecture-overview.svg)
 
 A API e o worker rodam no mesmo processo, por decisão consciente. O custo disso está em
 [API e worker no mesmo processo](#api-e-worker-no-mesmo-processo).
 
 ## O ciclo de um pedido
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant L as Loja
-    participant A as API
-    participant DB as Postgres
-    participant Q as Redis / BullMQ
-    participant W as Worker
-    participant X as Serviços externos
+[![Jornada assíncrona do pedido](docs/diagrams/order-processing-flow.svg)](docs/diagrams/order-processing-flow.svg)
 
-    L->>A: POST /webhooks/orders
-    A->>DB: grava pedido e itens com status RECEIVED
-    Note over A,DB: a coluna idempotency_key é UNIQUE. Pedido repetido<br/>bate no erro 23505 e devolve o que já existia
-    A->>Q: enfileira o job, só depois do commit
-    A-->>L: 202 { id, status: RECEIVED }
-    Q->>W: entrega o job
-    W->>DB: busca o pedido, que é a fonte de verdade
-    W->>DB: muda o status para ENRICHING
-    W->>X: busca o produto pelo SKU
-    X-->>W: nome do produto e desconto
-    W->>X: busca a cotação, se a moeda não for a base
-    W->>DB: status ENRICHED, com totais e valor convertido
-```
-
-```mermaid
-stateDiagram-v2
-    [*] --> RECEIVED: webhook aceito (202)
-    RECEIVED --> ENRICHING: worker pegou o job
-    ENRICHING --> ENRICHING: nova tentativa, esperando 2s, 4s e 8s
-    ENRICHING --> ENRICHED: serviço externo respondeu
-    ENRICHING --> FAILED_ENRICHMENT: acabaram as 4 tentativas, ou o erro não tem conserto
-    FAILED_ENRICHMENT --> ENRICHING: alguém reprocessou da fila de falhas
-    ENRICHED --> [*]
-```
+[![Ciclo de estados do pedido](docs/diagrams/order-state-lifecycle.svg)](docs/diagrams/order-state-lifecycle.svg)
 
 Fila pode entregar o mesmo job duas vezes. Isso não é defeito, é como fila funciona, e
 acontece. Por isso o próprio pedido recusa qualquer pulo de etapa: um pedido `RECEIVED` não vira
