@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Arquitetura do orquestrador de pedidos</title>
+  <desc id="desc">A API recebe webhooks, persiste pedidos no PostgreSQL e publica jobs no Redis. O worker enriquece produtos, consulta cambio opcionalmente e envia falhas definitivas para a DLQ.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#33414d"/>
+    </marker>
+    <marker id="arrow-teal" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1f766e"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#a84545"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      .title { font-size: 40px; font-weight: 750; fill: #17212b; }
+      .subtitle { font-size: 19px; fill: #5e6a73; }
+      .section { font-size: 18px; font-weight: 700; fill: #1f766e; letter-spacing: 1px; }
+      .node-title { font-size: 24px; font-weight: 750; fill: #17212b; }
+      .node-copy { font-size: 17px; fill: #53616c; }
+      .chip { font-size: 15px; font-weight: 700; }
+      .label { font-size: 16px; font-weight: 650; fill: #33414d; }
+      .small { font-size: 14px; fill: #68757e; }
+      .line { fill: none; stroke: #33414d; stroke-width: 3; marker-end: url(#arrow); }
+      .line-teal { fill: none; stroke: #1f766e; stroke-width: 3; marker-end: url(#arrow-teal); }
+      .line-red { fill: none; stroke: #a84545; stroke-width: 3; marker-end: url(#arrow-red); }
+      .optional { stroke-dasharray: 9 8; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1000" fill="#f6f8f7"/>
+  <rect x="52" y="44" width="8" height="76" fill="#1f766e"/>
+  <text x="84" y="78" class="sans title">Arquitetura do orquestrador</text>
+  <text x="84" y="110" class="sans subtitle">Entrada idempotente, processamento assíncrono e enriquecimento tolerante a falhas</text>
+
+  <g aria-label="Legenda">
+    <line x1="1190" y1="74" x2="1245" y2="74" class="line-teal"/>
+    <text x="1260" y="80" class="sans small">fluxo principal</text>
+    <line x1="1190" y1="108" x2="1245" y2="108" class="line optional"/>
+    <text x="1260" y="114" class="sans small">etapa opcional</text>
+  </g>
+
+  <rect x="390" y="166" width="650" height="402" rx="8" fill="#e8f2f0" stroke="#1f766e" stroke-width="2"/>
+  <text x="424" y="208" class="sans section">CONTAINER API · 1 PROCESSO NODE.JS</text>
+  <line x1="424" y1="228" x2="1006" y2="228" stroke="#b8d6d1" stroke-width="2"/>
+
+  <g aria-label="API NestJS">
+    <rect x="438" y="282" width="250" height="190" rx="8" fill="#ffffff" stroke="#1f766e" stroke-width="2"/>
+    <rect x="460" y="304" width="70" height="27" rx="4" fill="#d5ebe7"/>
+    <text x="495" y="323" text-anchor="middle" class="sans chip" fill="#175c56">HTTP</text>
+    <text x="460" y="370" class="sans node-title">API NestJS</text>
+    <text x="460" y="405" class="sans node-copy">Webhook + consultas</text>
+    <text x="460" y="436" class="sans small">validação · idempotência</text>
+  </g>
+
+  <g aria-label="Worker BullMQ">
+    <rect x="742" y="282" width="250" height="190" rx="8" fill="#ffffff" stroke="#1f766e" stroke-width="2"/>
+    <rect x="764" y="304" width="92" height="27" rx="4" fill="#d5ebe7"/>
+    <text x="810" y="323" text-anchor="middle" class="sans chip" fill="#175c56">WORKER</text>
+    <text x="764" y="370" class="sans node-title">BullMQ</text>
+    <text x="764" y="405" class="sans node-copy">5 jobs em paralelo</text>
+    <text x="764" y="436" class="sans small">retry · backoff · classificação</text>
+  </g>
+
+  <g aria-label="Loja ou marketplace">
+    <rect x="62" y="286" width="260" height="172" rx="8" fill="#eaf2fb" stroke="#326aa3" stroke-width="2"/>
+    <rect x="84" y="309" width="77" height="27" rx="4" fill="#d8e8f8"/>
+    <text x="122" y="328" text-anchor="middle" class="sans chip" fill="#285982">ORIGEM</text>
+    <text x="84" y="375" class="sans node-title">Loja</text>
+    <text x="84" y="405" class="sans node-copy">ou marketplace</text>
+    <text x="84" y="435" class="sans small">emissor do webhook</text>
+  </g>
+
+  <g aria-label="Fila principal">
+    <rect x="1158" y="270" width="350" height="190" rx="8" fill="#fff2d6" stroke="#9a6715" stroke-width="2"/>
+    <rect x="1182" y="294" width="67" height="27" rx="4" fill="#f7dda5"/>
+    <text x="1215" y="313" text-anchor="middle" class="sans chip" fill="#765016">REDIS</text>
+    <text x="1182" y="360" class="sans node-title">Fila principal</text>
+    <text x="1182" y="394" class="sans node-copy">orders-enrichment</text>
+    <text x="1182" y="427" class="sans small">4 tentativas · backoff com jitter</text>
+  </g>
+
+  <g aria-label="Catálogo de produtos">
+    <rect x="62" y="742" width="300" height="180" rx="8" fill="#eaf5e8" stroke="#477d3e" stroke-width="2"/>
+    <text x="86" y="785" class="sans node-title">Catálogo</text>
+    <text x="86" y="818" class="sans node-copy">nome + desconto</text>
+    <rect x="86" y="850" width="110" height="31" rx="4" fill="#d7ead3"/>
+    <text x="141" y="871" text-anchor="middle" class="sans chip" fill="#386531">DummyJSON</text>
+    <rect x="207" y="850" width="127" height="31" rx="4" fill="#d7ead3"/>
+    <text x="270" y="871" text-anchor="middle" class="sans chip" fill="#386531">Interno</text>
+  </g>
+
+  <g aria-label="Serviço de câmbio">
+    <rect x="402" y="742" width="300" height="180" rx="8" fill="#e7f3f5" stroke="#397986" stroke-width="2"/>
+    <text x="426" y="785" class="sans node-title">Frankfurter</text>
+    <text x="426" y="818" class="sans node-copy">cotação de moeda</text>
+    <text x="426" y="858" class="sans small">opcional: falha não bloqueia</text>
+    <text x="426" y="881" class="sans small">o enriquecimento do pedido</text>
+  </g>
+
+  <g aria-label="Banco de dados">
+    <rect x="742" y="742" width="300" height="180" rx="8" fill="#f1ecfa" stroke="#665099" stroke-width="2"/>
+    <text x="766" y="785" class="sans node-title">PostgreSQL</text>
+    <text x="766" y="818" class="sans node-copy">fonte de verdade</text>
+    <text x="766" y="858" class="sans small">pedido · itens · status</text>
+    <text x="766" y="881" class="sans small">idempotency_key UNIQUE</text>
+  </g>
+
+  <g aria-label="Fila de falhas">
+    <rect x="1082" y="742" width="360" height="180" rx="8" fill="#fdeaea" stroke="#a84545" stroke-width="2"/>
+    <text x="1106" y="785" class="sans node-title">Fila de falhas</text>
+    <text x="1106" y="818" class="sans node-copy">orders-enrichment-dlq</text>
+    <text x="1106" y="858" class="sans small">auditoria + reprocessamento</text>
+    <text x="1106" y="881" class="sans small">manual de falhas definitivas</text>
+  </g>
+
+  <path d="M322 345 H438" class="line-teal"/>
+  <rect x="323" y="309" width="116" height="25" rx="4" fill="#f6f8f7"/>
+  <text x="381" y="327" text-anchor="middle" class="sans label">POST webhook</text>
+
+  <path d="M438 420 H322" class="line"/>
+  <rect x="338" y="427" width="84" height="25" rx="4" fill="#f6f8f7"/>
+  <text x="380" y="445" text-anchor="middle" class="sans label">202 / 200</text>
+
+  <path d="M688 332 V248 H1108 V330 H1158" class="line-teal"/>
+  <rect x="804" y="231" width="222" height="27" rx="4" fill="#f6f8f7"/>
+  <text x="915" y="250" text-anchor="middle" class="sans label">2 · publica após o commit</text>
+
+  <path d="M1158 410 H992" class="line-teal"/>
+  <rect x="1012" y="372" width="127" height="27" rx="4" fill="#f6f8f7"/>
+  <text x="1075" y="391" text-anchor="middle" class="sans label">entrega o job</text>
+
+  <path d="M550 472 V650 H892 V742" class="line-teal"/>
+  <rect x="587" y="633" width="173" height="27" rx="4" fill="#f6f8f7"/>
+  <text x="673" y="652" text-anchor="middle" class="sans label">1 · grava e commita</text>
+
+  <path d="M870 472 V742" class="line"/>
+  <rect x="880" y="570" width="155" height="47" rx="4" fill="#f6f8f7"/>
+  <text x="957" y="590" text-anchor="middle" class="sans label">lê e atualiza</text>
+  <text x="957" y="610" text-anchor="middle" class="sans small">status e totais</text>
+
+  <path d="M798 472 V612 H212 V742" class="line"/>
+  <rect x="326" y="595" width="222" height="27" rx="4" fill="#f6f8f7"/>
+  <text x="437" y="614" text-anchor="middle" class="sans label">enriquecimento obrigatório</text>
+
+  <path d="M834 472 V647 H552 V742" class="line optional"/>
+  <rect x="577" y="630" width="173" height="27" rx="4" fill="#f6f8f7"/>
+  <text x="663" y="649" text-anchor="middle" class="sans label">conversão opcional</text>
+
+  <path d="M930 472 V622 H1262 V742" class="line-red"/>
+  <rect x="1077" y="605" width="217" height="27" rx="4" fill="#f6f8f7"/>
+  <text x="1185" y="624" text-anchor="middle" class="sans label">falha final ou sem retry</text>
+
+  <text x="52" y="971" class="sans small">O correlation ID acompanha a requisição, o job e os logs de cada tentativa.</text>
+</svg>

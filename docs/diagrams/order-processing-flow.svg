@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1360" viewBox="0 0 1600 1360" role="img" aria-labelledby="title desc">
+  <title id="title">Jornada assíncrona de um pedido</title>
+  <desc id="desc">Sequência desde o recebimento do webhook até o pedido enriquecido, separando a confirmação síncrona do processamento feito pelo worker.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#33414d"/>
+    </marker>
+    <marker id="arrow-teal" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1f766e"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      .title { font-size: 40px; font-weight: 750; fill: #17212b; }
+      .subtitle { font-size: 19px; fill: #5e6a73; }
+      .phase { font-size: 15px; font-weight: 750; letter-spacing: 1px; }
+      .actor { font-size: 18px; font-weight: 750; fill: #17212b; }
+      .actor-sub { font-size: 14px; fill: #66737d; }
+      .message { font-size: 16px; font-weight: 650; fill: #27343f; }
+      .detail { font-size: 14px; fill: #5e6a73; }
+      .number { font-size: 14px; font-weight: 800; fill: #ffffff; }
+      .lifeline { stroke: #aeb9bf; stroke-width: 2; stroke-dasharray: 7 8; }
+      .flow { fill: none; stroke: #33414d; stroke-width: 3; marker-end: url(#arrow); }
+      .main { fill: none; stroke: #1f766e; stroke-width: 3; marker-end: url(#arrow-teal); }
+      .optional { stroke-dasharray: 10 8; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1360" fill="#f7f8f7"/>
+  <rect x="52" y="44" width="8" height="76" fill="#1f766e"/>
+  <text x="84" y="78" class="sans title">Jornada assíncrona do pedido</text>
+  <text x="84" y="110" class="sans subtitle">A resposta ao webhook termina antes do enriquecimento começar</text>
+
+  <rect x="52" y="194" width="1496" height="430" rx="8" fill="#eef4fa"/>
+  <rect x="52" y="648" width="1496" height="640" rx="8" fill="#edf5f2"/>
+  <rect x="70" y="214" width="172" height="30" rx="4" fill="#d8e8f8"/>
+  <text x="156" y="235" text-anchor="middle" class="sans phase" fill="#285982">FASE SÍNCRONA</text>
+  <rect x="70" y="668" width="196" height="30" rx="4" fill="#d5ebe7"/>
+  <text x="168" y="689" text-anchor="middle" class="sans phase" fill="#175c56">FASE ASSÍNCRONA</text>
+
+  <g aria-label="Participantes">
+    <rect x="45" y="139" width="190" height="66" rx="8" fill="#ffffff" stroke="#326aa3" stroke-width="2"/>
+    <text x="140" y="169" text-anchor="middle" class="sans actor">Emissor</text>
+    <text x="140" y="191" text-anchor="middle" class="sans actor-sub">loja / marketplace</text>
+
+    <rect x="305" y="139" width="190" height="66" rx="8" fill="#ffffff" stroke="#1f766e" stroke-width="2"/>
+    <text x="400" y="180" text-anchor="middle" class="sans actor">API</text>
+
+    <rect x="565" y="139" width="190" height="66" rx="8" fill="#ffffff" stroke="#665099" stroke-width="2"/>
+    <text x="660" y="169" text-anchor="middle" class="sans actor">PostgreSQL</text>
+    <text x="660" y="191" text-anchor="middle" class="sans actor-sub">fonte de verdade</text>
+
+    <rect x="825" y="139" width="190" height="66" rx="8" fill="#ffffff" stroke="#9a6715" stroke-width="2"/>
+    <text x="920" y="169" text-anchor="middle" class="sans actor">Redis</text>
+    <text x="920" y="191" text-anchor="middle" class="sans actor-sub">BullMQ</text>
+
+    <rect x="1085" y="139" width="190" height="66" rx="8" fill="#ffffff" stroke="#1f766e" stroke-width="2"/>
+    <text x="1180" y="169" text-anchor="middle" class="sans actor">Worker</text>
+    <text x="1180" y="191" text-anchor="middle" class="sans actor-sub">concorrência 5</text>
+
+    <rect x="1345" y="139" width="190" height="66" rx="8" fill="#ffffff" stroke="#477d3e" stroke-width="2"/>
+    <text x="1440" y="169" text-anchor="middle" class="sans actor">Provedores</text>
+    <text x="1440" y="191" text-anchor="middle" class="sans actor-sub">catálogo + câmbio</text>
+  </g>
+
+  <line x1="140" y1="205" x2="140" y2="1288" class="lifeline"/>
+  <line x1="400" y1="205" x2="400" y2="1288" class="lifeline"/>
+  <line x1="660" y1="205" x2="660" y2="1288" class="lifeline"/>
+  <line x1="920" y1="205" x2="920" y2="1288" class="lifeline"/>
+  <line x1="1180" y1="205" x2="1180" y2="1288" class="lifeline"/>
+  <line x1="1440" y1="205" x2="1440" y2="1288" class="lifeline"/>
+
+  <g aria-label="Passo 1">
+    <circle cx="160" cy="282" r="15" fill="#1f766e"/>
+    <text x="160" y="287" text-anchor="middle" class="sans number">1</text>
+    <path d="M140 305 H400" class="main"/>
+    <text x="270" y="289" text-anchor="middle" class="sans message">POST /webhooks/orders</text>
+  </g>
+
+  <g aria-label="Passo 2">
+    <circle cx="420" cy="354" r="15" fill="#1f766e"/>
+    <text x="420" y="359" text-anchor="middle" class="sans number">2</text>
+    <path d="M400 377 H660" class="main"/>
+    <text x="530" y="361" text-anchor="middle" class="sans message">grava pedido + itens</text>
+    <text x="530" y="400" text-anchor="middle" class="sans detail">status RECEIVED · mesma transação</text>
+  </g>
+
+  <g aria-label="Regra de idempotência">
+    <path d="M550 424 L578 443 L550 462 Z" fill="#fff2d6" stroke="#9a6715" stroke-width="2"/>
+    <rect x="578" y="414" width="365" height="76" rx="8" fill="#fffaf0" stroke="#9a6715" stroke-width="2"/>
+    <text x="600" y="443" class="sans message">Idempotência no banco</text>
+    <text x="600" y="469" class="sans detail">idempotency_key UNIQUE; concorrência segura</text>
+  </g>
+
+  <g aria-label="Passo 3">
+    <circle cx="420" cy="522" r="15" fill="#1f766e"/>
+    <text x="420" y="527" text-anchor="middle" class="sans number">3</text>
+    <path d="M400 545 H920" class="main"/>
+    <text x="660" y="529" text-anchor="middle" class="sans message">publica job somente após o commit</text>
+    <text x="660" y="568" text-anchor="middle" class="sans detail">jobId = idempotency_key</text>
+  </g>
+
+  <g aria-label="Passo 4">
+    <circle cx="380" cy="582" r="15" fill="#326aa3"/>
+    <text x="380" y="587" text-anchor="middle" class="sans number">4</text>
+    <path d="M400 603 H140" class="flow optional"/>
+    <text x="270" y="587" text-anchor="middle" class="sans message">202 novo · 200 replay</text>
+  </g>
+
+  <g aria-label="Passo 5">
+    <circle cx="940" cy="722" r="15" fill="#1f766e"/>
+    <text x="940" y="727" text-anchor="middle" class="sans number">5</text>
+    <path d="M920 745 H1180" class="main"/>
+    <text x="1050" y="729" text-anchor="middle" class="sans message">entrega o job</text>
+  </g>
+
+  <g aria-label="Passo 6">
+    <circle cx="1160" cy="794" r="15" fill="#1f766e"/>
+    <text x="1160" y="799" text-anchor="middle" class="sans number">6</text>
+    <path d="M1180 817 H660" class="main"/>
+    <text x="920" y="801" text-anchor="middle" class="sans message">carrega o pedido</text>
+    <text x="920" y="840" text-anchor="middle" class="sans detail">o job transporta apenas orderId + correlationId</text>
+  </g>
+
+  <g aria-label="Passo 7">
+    <circle cx="1160" cy="872" r="15" fill="#1f766e"/>
+    <text x="1160" y="877" text-anchor="middle" class="sans number">7</text>
+    <path d="M1180 895 H660" class="main"/>
+    <text x="920" y="879" text-anchor="middle" class="sans message">atualiza status para ENRICHING</text>
+  </g>
+
+  <g aria-label="Passo 8">
+    <circle cx="1200" cy="944" r="15" fill="#1f766e"/>
+    <text x="1200" y="949" text-anchor="middle" class="sans number">8</text>
+    <path d="M1180 967 H1440" class="main"/>
+    <text x="1310" y="951" text-anchor="middle" class="sans message">busca cada SKU</text>
+    <path d="M1440 1021 H1180" class="flow optional"/>
+    <text x="1310" y="1005" text-anchor="middle" class="sans detail">nome do produto + desconto</text>
+  </g>
+
+  <g aria-label="Passo 9 opcional">
+    <circle cx="1160" cy="1062" r="15" fill="#397986"/>
+    <text x="1160" y="1067" text-anchor="middle" class="sans number">9</text>
+    <path d="M1180 1085 H1440" class="flow optional"/>
+    <text x="1310" y="1069" text-anchor="middle" class="sans message">cotação, se a moeda exigir</text>
+    <path d="M1440 1139 H1180" class="flow optional"/>
+    <text x="1310" y="1123" text-anchor="middle" class="sans detail">falha aqui não interrompe o pedido</text>
+  </g>
+
+  <g aria-label="Passo 10">
+    <circle cx="1160" cy="1190" r="15" fill="#1f766e"/>
+    <text x="1160" y="1195" text-anchor="middle" class="sans number">10</text>
+    <path d="M1180 1213 H660" class="main"/>
+    <text x="920" y="1197" text-anchor="middle" class="sans message">salva itens, totais e status ENRICHED</text>
+    <text x="920" y="1237" text-anchor="middle" class="sans detail">a resposta inicial já foi entregue no passo 4</text>
+  </g>
+
+  <rect x="52" y="1313" width="1496" height="1" fill="#cfd7da"/>
+  <text x="52" y="1340" class="sans detail">Falhas do catálogo seguem a política de retry e DLQ detalhada no ciclo de estados.</text>
+</svg>
