@@ -1,0 +1,55 @@
+name: orquestrador
+
+services:
+  api:
+    build:
+      context: .
+      target: dev
+    ports:
+      - '3000:3000'
+    env_file: .env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis
+    volumes:
+      - .:/app
+      # volume anonimo pra nao deixar o node_modules do host (linux/mac/win) vazar pro container
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - '5434:5432'
+    # valor padrão em cada interpolação pra quem rodar um comando do compose antes de existir
+    # .env não tomar três avisos de variável vazia na cara
+    environment:
+      POSTGRES_USER: ${DB_USER:-orquestrador}
+      POSTGRES_PASSWORD: ${DB_PASS:-orquestrador}
+      POSTGRES_DB: ${DB_NAME:-orquestrador}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # sem o healthcheck + condition a api sobe antes do postgres aceitar conexao e morre no boot
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

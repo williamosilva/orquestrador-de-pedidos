@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.env
+*.log
+*.tsbuildinfo
+.DS_Store
+
+# config de ferramenta local que monta botões pros npm scripts. é preferência de
+# ambiente de quem está desenvolvendo, não faz parte do projeto
+.dev-island/

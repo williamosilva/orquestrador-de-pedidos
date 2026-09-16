@@ -1,0 +1,30 @@
+name: orquestrador-test
+
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_USER: orquestrador
+      POSTGRES_PASSWORD: orquestrador
+      POSTGRES_DB: orquestrador_test
+    # tmpfs pq banco de teste nao precisa sobreviver a nada, deixa a suite bem mais rapida
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  redis-test:
+    image: redis:7-alpine
+    command: redis-server --save '' --appendonly no
+    ports:
+      - '6380:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 3s
+      timeout: 3s
+      retries: 10

@@ -1,0 +1,7 @@
+dist
+coverage
+node_modules
+
+# migration e gerada pela cli do typeorm. formatar na mao so gera diff sem valor, e o
+# eslint tambem ignora essa pasta pelo mesmo motivo
+src/migrations
