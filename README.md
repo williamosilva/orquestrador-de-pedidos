@@ -15,15 +15,40 @@ moedas. Tem retry com backoff, fila de falhas e endpoints de consulta.
 
 ## Como rodar
 
-Você precisa de Docker e nada mais. Node local só é necessário para rodar os testes.
+Você precisa de **Git**, **Docker** e **Docker Compose**. O Docker Desktop já inclui o Compose.
+Node local só é necessário para rodar os testes.
 
 ```bash
-npm run docker:up      # sobe api, postgres e redis. cria as tabelas no boot
-npm run docker:logs    # acompanha o log da api
-npm run docker:down    # derruba tudo
+git clone https://github.com/williamosilva/orquestrador-de-pedidos.git
+cd orquestrador-de-pedidos
 ```
 
-A primeira execução baixa imagens e compila, então leva alguns minutos. Depois sobe em segundos.
+Crie o arquivo de ambiente a partir do exemplo. No macOS, Linux ou Git Bash:
+
+```bash
+cp .env.example .env
+```
+
+No Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Agora suba a aplicação:
+
+```bash
+docker compose up -d --build  # sobe API, PostgreSQL e Redis; cria as tabelas no boot
+docker compose logs -f api    # acompanha os logs da API; Ctrl+C apenas encerra a leitura
+```
+
+A primeira execução baixa as imagens e compila a aplicação, então pode levar alguns minutos.
+As próximas sobem em segundos. Para derrubar os containers:
+
+```bash
+docker compose down
+```
+
 Com tudo no ar:
 
 - **Swagger:** http://localhost:3000/docs, que já vem com dois payloads de exemplo. Clique em
@@ -41,13 +66,13 @@ Para recomeçar de um estado limpo, apagando banco e fila, rode os dois em sequ�
 
 ```bash
 docker compose down -v
-npm run docker:up
+docker compose up -d --build
 ```
 
 ### Variáveis de ambiente
 
-Não precisa configurar nada: o `npm run docker:up` copia o `.env.example` para `.env` se ele
-ainda não existir. O arquivo inteiro:
+Para usar os valores padrão, basta copiar `.env.example` para `.env` como mostrado acima. Não é
+necessário editar o arquivo. O conteúdo padrão é:
 
 ```bash
 NODE_ENV=development
@@ -78,7 +103,11 @@ do Compose o banco continua na 5432, e o `docker-compose.yml` sobrescreve `DB_HO
 
 ### Testes
 
+Os testes são a única etapa que exige Node.js instalado na máquina. Depois do clone, instale as
+dependências uma vez:
+
 ```bash
+npm ci
 npm test                 # 27 testes unitários, roda em segundos
 
 npm run test:infra       # sobe o postgres e o redis de teste e espera ficarem prontos
